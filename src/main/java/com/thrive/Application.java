@@ -1,22 +1,26 @@
 package com.thrive;
 
-import io.ktor.server.application.*;
-import io.ktor.server.engine.ApplicationEngine;
-import io.ktor.server.engine.ApplicationEngineKt;
-import io.ktor.server.netty.Netty;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 public class Application {
 
-    public static void main(String[] args) {
-        ApplicationEngine server = ApplicationEngineKt.embeddedServer(
-            Netty.INSTANCE,
-            8080,
-            Application::module
-        );
-        server.start(true);
-    }
+    public static void main(String[] args) throws InterruptedException {
+        EventLoopGroup boss = new NioEventLoopGroup(1);
+        EventLoopGroup workers = new NioEventLoopGroup();
 
-    public static void module(io.ktor.server.application.Application app) {
-        Routing.configureRouting(app);
+        try {
+            ServerBootstrap bootstrap = new ServerBootstrap()
+                    .group(boss, workers)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new Routing());
+
+            bootstrap.bind(8080).sync().channel().closeFuture().sync();
+        } finally {
+            boss.shutdownGracefully();
+            workers.shutdownGracefully();
+        }
     }
 }

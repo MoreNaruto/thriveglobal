@@ -1,33 +1,58 @@
 package com.thrive;
 
-import io.ktor.client.request.HttpRequestBuilder;
-import io.ktor.client.request.HttpRequestKt;
-import io.ktor.client.statement.HttpResponse;
-import io.ktor.http.HttpStatusCode;
-import io.ktor.server.testing.ApplicationTestBuilder;
-import io.ktor.server.testing.ApplicationTestBuilderKt;
-import kotlin.Unit;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ApplicationTest {
 
-    @Test
-    public void testRoot() {
-        ApplicationTestBuilderKt.testApplication(testBuilder -> {
-            testBuilder.application(app -> {
-                Application.module(app);
-                return Unit.INSTANCE;
-            });
+    private static ExecutorService serverExecutor;
 
-            HttpResponse response = HttpRequestKt.get(
-                testBuilder.getClient(),
-                "/hello",
-                (HttpRequestBuilder) null
-            );
-            assertEquals(HttpStatusCode.Companion.getOK(), response.getStatus());
-            return Unit.INSTANCE;
+    @BeforeAll
+    public static void startServer() {
+        serverExecutor = Executors.newSingleThreadExecutor();
+        serverExecutor.submit(() -> {
+            try {
+                Application.main(new String[]{});
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         });
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @AfterAll
+    public static void stopServer() {
+        serverExecutor.shutdownNow();
+    }
+
+    @Test
+    public void testHelloEndpoint() throws Exception {
+        URL url = new URL("http://localhost:8080/hello");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+
+        int responseCode = connection.getResponseCode();
+        assertEquals(200, responseCode);
+
+        try (BufferedReader in = new BufferedReader(
+                new InputStreamReader(connection.getInputStream()))) {
+            String response = in.readLine();
+            assertEquals("Hello World", response);
+        }
     }
 }

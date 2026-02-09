@@ -1,28 +1,18 @@
 package com.thrive;
 
-import io.ktor.http.ContentType;
-import io.ktor.http.HttpStatusCode;
-import io.ktor.server.application.*;
-import io.ktor.server.response.ApplicationResponseFunctionsKt;
-import io.ktor.server.routing.RoutingKt;
-import kotlin.Unit;
-import kotlin.coroutines.Continuation;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.*;
 
-public class Routing {
+public class Routing extends ChannelInitializer<SocketChannel> {
 
-    public static void configureRouting(Application app) {
-        RoutingKt.routing(app, routing -> {
-            RoutingKt.get(routing, "/hello", route -> {
-                ApplicationResponseFunctionsKt.respondText(
-                    route,
-                    "Hello World!",
-                    ContentType.Text.Plain.INSTANCE,
-                    HttpStatusCode.Companion.getOK(),
-                    (Continuation<? super Unit>) null
-                );
-                return Unit.INSTANCE;
-            });
-            return Unit.INSTANCE;
-        });
+    @Override
+    protected void initChannel(SocketChannel ch) {
+        ChannelPipeline p = ch.pipeline();
+
+        p.addLast(new HttpServerCodec());
+        p.addLast(new HttpObjectAggregator(64 * 1024));
+        p.addLast(new SimpleHandler());
     }
 }

@@ -1,0 +1,34 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'io.ktor.plugin' version '3.1.0'
+}
+
+group = 'com.thrive'
+version = '0.0.1'
+
+application {
+    mainClass = 'com.thrive.Application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.netty:netty-all:4.1.108.Final'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
